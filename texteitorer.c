@@ -1,12 +1,14 @@
 #ifndef UNICODE
 #define UNICODE
 #endif
-#define ID_FILE_EXIT 128
+#define EXIT 128
+#define ABUT 256
 #include <windows.h>
 #include "src.h"
 
 // for win cbs:
 // 128 << idx
+// (assuming idx is 0-based)
 
 int rX = 0;
 int rY = 0;
@@ -32,7 +34,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine,
 	}
 	HMENU menu = CreateMenu();
 	HMENU file = CreateMenu();
-	AppendMenu(file, MF_STRING, ID_FILE_EXIT, L"exit the furry convention");
+	AppendMenu(file, MF_STRING, EXIT, L"excite");
+	AppendMenu(file, MF_STRING, ABUT, L"aboot");
 	AppendMenu(menu, MF_POPUP, (UINT_PTR)file, L"filet");
 	HWND hwnd = CreateWindowEx(
 		0, // window styles
@@ -65,8 +68,11 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 	switch (uMsg) {
 		case WM_COMMAND:
 			switch (LOWORD(wParam)) {
-				case ID_FILE_EXIT:
+				case EXIT:
 					PostQuitMessage(0);
+					break;
+				case ABUT:
+					MessageBox(hwnd, L"text eitorer\n\nmade by grad man 2 be silly", L"aboot", MB_OK | MB_ICONINFORMATION);
 					break;
 			}
 			return 0;
