@@ -24,6 +24,15 @@ HWND hwnd;
 HWND edit;
 COLORREF winCol;
 
+int* getSizeOfHwnd() {
+	static int wh[2];
+	RECT r;
+	GetClientRect(hwnd, &r);
+	wh[0] = r.right - r.left;
+	wh[1] = r.bottom - r.top;
+	return wh;
+}
+
 COLORREF initWinCol() {
 	COLORREF winCol = GetBkColor(GetDC(hwnd));
 	return winCol;
@@ -86,6 +95,7 @@ bool triggerSaveAs() {
 	SendMessageW(edit, WM_GETTEXT, len, (LPARAM)buf);
 	fwprintf(file, L"%ls", buf);
 	fclose(file);
+	free(buf); // phatgpt recommendation, dont blame me 4 actually caring abt mem leaks 4 once
 	return true;
 }
 
@@ -110,6 +120,17 @@ HMENU populateMenu() {
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	switch (uMsg) {
+		case WM_GETMINMAXINFO:
+			MINMAXINFO* mmi = (MINMAXINFO*)lParam;
+			int* wh_ = getSizeOfHwnd();
+			mmi->ptMinTrackSize.x = 600;
+			mmi->ptMinTrackSize.y = 380;
+			return 0;
+		case WM_SIZE:
+			// break; // wip
+			int* wh = getSizeOfHwnd();
+			MoveWindow(edit, 0, 0, wh[0], wh[1], true); //  - (GetSystemMetrics(SM_CXVSCROLL) / 2) //  - (GetSystemMetrics(SM_CYVSCROLL) * 3)
+			break;
 		case WM_COMMAND:
 			switch (LOWORD(wParam)) {
 				case EXIT:
@@ -202,11 +223,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine,
 		return 0;
 	}
 	HMENU menu = populateMenu();
-	HWND hwnd = CreateWindowEx(
+	hwnd = CreateWindowEx(
 		0, // window styles
 		CLASS_NAME, // class
 		L"text eitorer", // title
-		WS_TILED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, // moar window styles ig
+		WS_OVERLAPPEDWINDOW, // WS_TILED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, moar window styles ig
 		CW_USEDEFAULT, CW_USEDEFAULT, // xy
 		600, // width
 		380, // height
@@ -224,7 +245,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine,
 		L"EDIT",
 		NULL,
 		WS_CHILD | WS_VISIBLE | WS_VSCROLL | ES_MULTILINE | ES_AUTOVSCROLL,
-		0, 0, 600 - (GetSystemMetrics(SM_CXVSCROLL) / 2), 380 - (GetSystemMetrics(SM_CYVSCROLL) * 3),
+		0, 0, CW_USEDEFAULT, CW_USEDEFAULT,
 		hwnd, NULL, hInstance, NULL
 	);
 	HFONT hFont = CreateFont(
@@ -244,7 +265,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine,
 		L"comic sans ms"
 	);
 	SendMessage(edit, WM_SETFONT, (WPARAM)hFont, 1);
-	SetWindowLong(hwnd, GWL_STYLE, GetWindowLong(hwnd, GWL_STYLE) & ~WS_SIZEBOX);
+	// SetWindowLong(hwnd, GWL_STYLE, GetWindowLong(hwnd, GWL_STYLE) & ~WS_SIZEBOX);
 	ShowWindow(hwnd, nCmdShow);
 	SendMessage(hwnd, WM_SETICON, 0, (LPARAM)LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(APP_ICON)));
 	// SetTimer(hwnd, 1, 1000 / 60, NULL);
