@@ -111,7 +111,7 @@ HMENU populateMenu() {
 	AppendMenu(fileM, MF_STRING, OPEN, L"oven");
 	// file
 	// edit
-	AppendMenu(editM, MF_STRING, FSIZ, L"fort....");
+	AppendMenu(editM, MF_STRING, FSIZ, L"clange fort....");
 	// edit
 	AppendMenu(res, MF_POPUP, (UINT_PTR)fileM, L"filet");
 	AppendMenu(res, MF_POPUP, (UINT_PTR)editM, L"emit");
@@ -265,7 +265,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine,
 		L"comic sans ms"
 	);
 	SendMessage(edit, WM_SETFONT, (WPARAM)hFont, 1);
-	// SetWindowLong(hwnd, GWL_STYLE, GetWindowLong(hwnd, GWL_STYLE) & ~WS_SIZEBOX);
+	// SetWindowLong(hwnd, GWL_STYLE, GetWindowLong(hwnd, GWL_STYLE) & ~WS_SIZEBOX); // fuck you past me
 	ShowWindow(hwnd, nCmdShow);
 	SendMessage(hwnd, WM_SETICON, 0, (LPARAM)LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(APP_ICON)));
 	// SetTimer(hwnd, 1, 1000 / 60, NULL);
