@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <time.h>
 #include "src.h"
 
 // for win cbs:
@@ -23,6 +24,7 @@ int rYV = 5;
 HWND hwnd;
 HWND edit;
 COLORREF winCol;
+bool noFonting = false;
 
 int* getSizeOfHwnd() {
 	static int wh[2];
@@ -143,6 +145,10 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 					triggerSaveAs();
 					break;
 				case FSIZ:
+					if (noFonting) {
+						MessageBox(hwnd, L"fuck you, not gonna do it now!", L"clange fort....", MB_OK | MB_ICONERROR);
+						break;
+					}
 					CHOOSEFONT cf;
 					HFONT hf;
 					LOGFONT lf;
@@ -156,6 +162,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 					cf.Flags = CF_SCREENFONTS | CF_SHOWHELP | CF_SCALABLEONLY | CF_FORCEFONTEXIST | CF_INITTOLOGFONTSTRUCT;
 					BOOL font = ChooseFont(&cf);
 					SendMessage(edit, WM_SETFONT, (WPARAM)(CreateFontIndirect(&lf)), true);
+					noFonting = rand() <= (RAND_MAX / 27.);
+					if (noFonting) MessageBox(hwnd, L"actually this setting got sentient so now im not gonna work anymoar\ngl trying to set the font now, ur stuck like this.", L"clange fort....", MB_OK | MB_ICONWARNING);
 					break;
 				case OPEN: // stub
 					break;
@@ -208,10 +216,12 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 		default:
 			return DefWindowProc(hwnd, uMsg, wParam, lParam);
 	}
-	return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine, int nCmdShow) {
+	time_t t;
+	time(&t);
+	srand((unsigned int)(GetCurrentProcessId() + (t >> 16) + t));
 	const wchar_t CLASS_NAME[] = L"TextEitorer";
 	WNDCLASS wc = {0};
 	wc.lpfnWndProc = WindowProc;
