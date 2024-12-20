@@ -6,6 +6,7 @@
 #define SAVE 512
 #define FSIZ 1024
 #define OPEN 2048
+#define TPCS 4096
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -87,16 +88,16 @@ bool triggerSaveAs() {
 	if (GetSaveFileName(&ofn) != TRUE) {
 		return false;
 	}
-	FILE* file = _wfopen(ofn.lpstrFile, L"w");
-	if (file == NULL) {
+	FILE* IO = _wfopen(ofn.lpstrFile, L"w");
+	if (IO == NULL) {
 		return true;
 	}
 	int len = SendMessageW(edit, WM_GETTEXTLENGTH, 0, 0);
 	len++;
 	wchar_t* buf = (wchar_t*)malloc(len * sizeof(wchar_t));
 	SendMessageW(edit, WM_GETTEXT, len, (LPARAM)buf);
-	fwprintf(file, L"%ls", buf);
-	fclose(file);
+	fwprintf(IO, L"%ls", buf);
+	fclose(IO);
 	free(buf); // phatgpt recommendation, dont blame me 4 actually caring abt mem leaks 4 once
 	return true;
 }
@@ -105,18 +106,20 @@ HMENU populateMenu() {
 	HMENU res = CreateMenu();
 	HMENU fileM = CreateMenu();
 	HMENU editM = CreateMenu();
-	// file
-	AppendMenu(fileM, MF_STRING, EXIT, L"excite");
-	AppendMenu(fileM, MF_STRING, ABUT, L"aboot");
-	AppendMenu(fileM, MF_SEPARATOR, 0, NULL);
+	// HMENU helpM = CreateMenu();
+	// IO
 	AppendMenu(fileM, MF_STRING, SAVE, L"sane");
 	AppendMenu(fileM, MF_STRING, OPEN, L"oven");
-	// file
+	AppendMenu(fileM, MF_SEPARATOR, 0, NULL);
+	AppendMenu(fileM, MF_STRING, ABUT, L"aboot");
+	AppendMenu(fileM, MF_STRING, EXIT, L"excite");
+	// IO
 	// edit
 	AppendMenu(editM, MF_STRING, FSIZ, L"clange fort....");
 	// edit
 	AppendMenu(res, MF_POPUP, (UINT_PTR)fileM, L"filet");
 	AppendMenu(res, MF_POPUP, (UINT_PTR)editM, L"emit");
+	AppendMenu(res, MF_STRING, TPCS, L"helm tropics....");
 	return res;
 }
 
@@ -166,6 +169,19 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 					if (noFonting) MessageBox(hwnd, L"actually this setting got sentient so now im not gonna work anymoar\ngl trying to set the font now, ur stuck like this.", L"clange fort....", MB_OK | MB_ICONWARNING);
 					break;
 				case OPEN: // stub
+					break;
+				case TPCS:
+					// HtmlHelp(hwnd, L"help.chm", HH_DISPLAY_TOC, 0);
+					HRSRC foundRc = FindResource(0, MAKEINTRESOURCE(HELP_CHM), RT_RCDATA);
+					char tempPath[MAX_PATH];
+					GetTempPathA(MAX_PATH, tempPath);
+					strcat(tempPath, "txedhp.chm");
+					FILE *IO = fopen(tempPath, "wb");
+					fwrite(LockResource(LoadResource(0, foundRc)), 1, SizeofResource(0, foundRc), IO);
+					fclose(IO);
+					wchar_t tempPathL[MAX_PATH];
+					MultiByteToWideChar(CP_UTF8, 0, tempPath, -1, tempPathL, MAX_PATH);
+					ShellExecute(hwnd, L"open", tempPathL, 0, 0, 1);
 					break;
 			}
 			return 0;
