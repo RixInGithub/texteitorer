@@ -182,6 +182,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 					wchar_t tempPathL[MAX_PATH];
 					MultiByteToWideChar(CP_UTF8, 0, tempPath, -1, tempPathL, MAX_PATH);
 					ShellExecute(hwnd, L"open", tempPathL, 0, 0, 1);
+					Sleep(2500);
+					DeleteFileA(tempPath);
 					break;
 			}
 			return 0;
