@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <time.h>
+#include <htmlhelp.h>
 #include "src.h"
 
 // for win cbs:
@@ -28,6 +29,17 @@ COLORREF winCol;
 bool noFonting = false;
 
 void sleep(int a) {clock_t b=clock();while(clock()<b+a*1000);}
+
+bool doesA_EndWithB(LPCWSTR a, LPCWSTR b) {
+	/*
+		if (!str || !suffix) {
+			return false; // handle NULL pointers
+		}
+	*/
+	// yk fuck null pointer handling idc
+	size_t c = wcslen(a) - wcslen(b);
+	return((c>(size_t)0)&&(!((bool)wcscmp(a+c,b)))); // (bool)0 should be false in which !false would be true, therefore it equivs to true IF the wcscmp returns smth like 0 like chatgpt speculates
+}
 
 int* getSizeOfHwnd() {
 	static int wh[2];
@@ -94,8 +106,7 @@ bool triggerSaveAs() {
 	if (IO == NULL) {
 		return true;
 	}
-	int len = SendMessageW(edit, WM_GETTEXTLENGTH, 0, 0);
-	len++;
+	int len = SendMessageW(edit, WM_GETTEXTLENGTH, 0, 0) + 1;
 	wchar_t* buf = (wchar_t*)malloc(len * sizeof(wchar_t));
 	SendMessageW(edit, WM_GETTEXT, len, (LPARAM)buf);
 	fwprintf(IO, L"%ls", buf);
@@ -173,7 +184,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 				case OPEN: // stub
 					break;
 				case TPCS:
-					// HtmlHelp(hwnd, L"help.chm", HH_DISPLAY_TOC, 0);
 					HRSRC foundRc = FindResource(0, MAKEINTRESOURCE(HELP_CHM), RT_RCDATA);
 					char tempPath[MAX_PATH];
 					GetTempPathA(MAX_PATH, tempPath);
@@ -183,10 +193,17 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 					fclose(IO);
 					wchar_t tempPathL[MAX_PATH];
 					MultiByteToWideChar(CP_UTF8, 0, tempPath, -1, tempPathL, MAX_PATH);
-					ShellExecute(hwnd, L"open", tempPathL, 0, 0, 1);
+					// ShellExecute(hwnd, L"open", tempPathL, 0, 0, 1);
+					HtmlHelp(hwnd, tempPathL, 1, 0); // HH_DISPLAY_TOC printf'd is just 1 lol
 					break;
 			}
 			return 0;
+		case WM_CHAR:
+			if((HWND)lParam!=edit)break; // (lParam!=(LPARAM)edit) is lengthier
+			int len = SendMessageW(edit, WM_GETTEXTLENGTH, 0, 0) + 1;
+			wchar_t* buf = (wchar_t*)malloc(len * sizeof(wchar_t));
+			SendMessageW(edit, WM_GETTEXT, len, (LPARAM)buf);
+			if (doesA_EndWithB(buf, L"i love sprunki")) {}
 		case WM_CLOSE:
 			int result = MessageBoxW(hwnd, L"doh yo went two sane beform exciting text eitorer?", L"text eitorer", MB_YESNOCANCEL | MB_ICONWARNING);
 			if ((result == IDCANCEL) || ((result == IDYES) && (!(triggerSaveAs())))) return 0;
