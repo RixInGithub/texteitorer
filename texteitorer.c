@@ -94,15 +94,15 @@ bool triggerSaveAs() {
 	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = NULL;
 	ofn.nMaxFile = sizeof(szFile);
-	ofn.nFilterIndex = 1;  // Default filter index
+	ofn.nFilterIndex = 1;
 	ofn.lpstrFileTitle = NULL;
 	ofn.nMaxFileTitle = 0;
-	ofn.lpstrInitialDir = NULL; // Initial directory
+	ofn.lpstrInitialDir = NULL;
 	ofn.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
 	if (GetSaveFileName(&ofn) != TRUE) {
 		return false;
 	}
-	FILE* IO = _wfopen(ofn.lpstrFile, L"w");
+	FILE* IO = _wfopen(ofn.lpstrFile, L"wb");
 	if (IO == NULL) {
 		return true;
 	}
@@ -113,6 +113,35 @@ bool triggerSaveAs() {
 	fclose(IO);
 	free(buf); // phatgpt recommendation, dont blame me 4 actually caring abt mem leaks 4 once
 	return true;
+}
+
+void triggerOpen() {
+	OPENFILENAME ofn;
+	wchar_t szFile[MAX_PATH] = L"";
+	ZeroMemory(&ofn, sizeof(ofn));
+	ofn.lpstrFile = szFile;
+	ofn.lpstrFilter = L"All Files\0*.*\0";
+	ofn.lStructSize = sizeof(ofn);
+	ofn.hwndOwner = NULL;
+	ofn.nMaxFile = sizeof(szFile);
+	ofn.nFilterIndex = 1;
+	ofn.lpstrFileTitle = NULL;
+	ofn.nMaxFileTitle = 0;
+	ofn.lpstrInitialDir = NULL;
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_HIDEREADONLY; // this aint saving
+	if (GetOpenFileName(&ofn) != TRUE) {
+		return;
+	}
+	FILE* IO = _wfopen(ofn.lpstrFile, L"rb");
+	if (IO == NULL) {
+		return;
+	}
+	fseek(IO, 0, SEEK_END);
+	long len = ftell(IO);
+	fseek(IO, 0, SEEK_SET);
+	wchar_t* buf = (wchar_t*)malloc(len + sizeof(wchar_t));
+	buf[fread(buf, 1, len, IO) / sizeof(wchar_t)] = L'\0';
+	SendMessageW(edit, WM_SETTEXT, 0, (LPARAM)buf);
 }
 
 HMENU populateMenu() {
@@ -182,6 +211,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 					if (noFonting) MessageBox(hwnd, L"actually this setting got sentient so now im not gonna work anymoar\ngl trying to set the font now, ur stuck like this.", L"clange fort....", MB_OK | MB_ICONWARNING);
 					break;
 				case OPEN: // stub
+					triggerOpen();
 					break;
 				case TPCS:
 					HRSRC foundRc = FindResource(0, MAKEINTRESOURCE(HELP_CHM), RT_RCDATA);
